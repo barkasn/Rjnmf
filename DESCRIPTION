@@ -1,0 +1,13 @@
+Package: Rjnmf
+Type: Package
+Title: Joint NMF
+Version: 0.1.0
+Authors@R: c(person("Nikolas", "Barkas", role = c("aut","cre"),
+                     email = "Nikolaos_Barkas@hms.harvard.edu"))
+Author: Nikolas Barkas [aut, cre]
+Description: JNMF
+License: GPL (>= 2)
+Encoding: UTF-8
+LinkingTo: Rcpp, RcppArmadillo
+LazyData: true
+RoxygenNote: 6.0.1
