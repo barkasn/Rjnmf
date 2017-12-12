@@ -43,9 +43,10 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
   double trXstXs = tr(Xs, Xs);
   double trXutXu = tr(Xu, Xu);
 
-  mat WtW = W.t() * W;
-  mat WtXs = W.t() * Xs;
-  mat WtXu = W.t() * Xu;
+  mat Wt = W.t();
+  mat WtW = Wt * W;
+  mat WtXs = Wt * Xs;
+  mat WtXu = Wt * Xu;
   mat WtWHs = WtW * Hs;
   mat WtWHu = WtW * Hu;
 
@@ -57,28 +58,34 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
     // Update Hs
     mat Hs_a = alpha * WtXs;
     mat Hs_b = alpha * WtWHs + lambda * Hs;
+    
     for (mat::iterator i = Hs_b.begin(); i != Hs_b.end(); ++i) {if(*i < MIN_VALUE) *i = MIN_VALUE;};
-    mat Hs_tmp = Hs % (Hs_a / Hs_b);
-    Hs = Hs_tmp;
+    // mat Hs_tmp = Hs % (Hs_a / Hs_b);
+    // Hs = Hs_tmp;
+    Hs = Hs % (Hs_a / Hs_b);
 
     // Update Hu
     mat Hu_a = beta * WtXu;
     mat Hu_b = beta * WtWHu + lambda * Hu; // todo cap
     for (mat::iterator i = Hu_b.begin(); i != Hu_b.end(); ++i) {if(*i < MIN_VALUE) *i = MIN_VALUE;};
-    mat Hu_tmp = Hu % (Hu_a / Hu_b);
-    Hu = Hu_tmp;
+    //mat Hu_tmp = Hu % (Hu_a / Hu_b);
+    //Hu = Hu_tmp;
+    Hu = Hu % (Hu_a / Hu_b);
 
     // Update W
     mat W_a = alpha * Xs * Hs.t() + beta * Xu * Hu.t();
     mat W_b = alpha * W  * Hs * Hs.t() + beta * W * Hu * Hu.t() + lambda * W;
     for (mat::iterator i = W_b.begin(); i != W_b.end(); ++i) {if (*i < MIN_VALUE) *i = MIN_VALUE;};
-    mat W_tmp = W % (W_a / W_b);
-    W = W_tmp;
+    // mat W_tmp = W % (W_a / W_b);
+    // W = W_tmp;
+    W = W % (W_a / W_b);
 
     // Calculate objective function
-    WtW = W.t() * W;
-    WtXs = W.t() * Xs;
-    WtXu = W.t() * Xu;
+    
+    Wt = W.t();
+    WtW = Wt * W;
+    WtXs = Wt * Xs;
+    WtXu = Wt * Xu;
     WtWHs = WtW * Hs;
     WtWHu = WtW * Hu;
 
@@ -86,8 +93,6 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
     double tr2 = beta   * (trXutXu - 2*tr(Hu, WtXu) + tr(Hu, WtWHu));
     double tr3 = lambda * (trace(WtW) + tr(Hs, Hs) + tr(Hu, Hu));
     double Obj = tr1 + tr2 + tr3;
-
-    if(verbose) Rcout << "Iteration " << itNum << endl;
 
     if (itNum != 1) {
         delta = abs(Obj - lastObj);
@@ -97,6 +102,8 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
     }
 
     lastObj = Obj;
+
+    Rcpp::checkUserInterrupt();
 
     ++itNum;
   }
