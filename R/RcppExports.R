@@ -5,3 +5,7 @@ RjnmfC <- function(Xs, Xu, k, alpha, lambda, epsilon, maxiter, verbose) {
     .Call('_Rjnmf_RjnmfC', PACKAGE = 'Rjnmf', Xs, Xu, k, alpha, lambda, epsilon, maxiter, verbose)
 }
 
+RjnmfGRC <- function(Xs, Xu, A, k, alpha, beta, lambda, epsilon, maxiter, verbose) {
+    .Call('_Rjnmf_RjnmfGRC', PACKAGE = 'Rjnmf', Xs, Xu, A, k, alpha, beta, lambda, epsilon, maxiter, verbose)
+}
+

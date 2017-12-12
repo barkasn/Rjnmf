@@ -114,3 +114,114 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
 
   return returnList;
 }
+
+/////////
+
+
+// [[Rcpp::export]]
+arma::field<arma::mat> RjnmfGRC(arma::mat Xs, arma::mat Xu, arma::mat A, int k, double alpha, double beta, double lambda, double epsilon, int maxiter, bool verbose) {
+
+  int n = Xs.n_rows;
+  int v1 = Xs.n_cols;
+  int v2 = Xu.n_cols;
+
+  double lastObj = 0;
+
+  // Make deterministic
+  arma_rng::set_seed(5134);
+
+  // Initialise Matrices
+  arma::mat W(n, k, fill::randu);
+  // NOTE .for_each() should be faster here
+  // W = abs(W) should also work here
+  for (mat::iterator i = W.begin(); i != W.end(); ++i) *i = abs(*i);
+
+  arma::mat Hs(k, v1, fill::randu);
+  for (mat::iterator i = Hs.begin(); i != Hs.end(); ++i) *i = abs(*i);
+
+  arma::mat Hu(k, v2, fill::randu);
+  for (mat::iterator i = Hu.begin(); i != Hu.end(); ++i) *i = abs(*i);
+
+  vec Acolsums(A.n_cols);
+  for (int i = 0; i < A.n_cols; ++i) {
+    Acolsums(i) = sum(A.col(i));
+  }
+  mat D = diagmat(Acolsums);
+  
+  double gamma = 1.0 - alpha;
+  double trXstXs = tr(Xs, Xs);
+  double trXutXu = tr(Xu, Xu);
+
+  mat Wt = W.t();
+
+  mat WtW = Wt * W;
+  mat WtXs = Wt * Xs;
+  mat WtXu = Wt * Xu;
+  mat WtWHs = WtW * Hs;
+  mat WtWHu = WtW * Hu;
+
+  mat DW = D * W;
+  mat AW = A * W;
+
+  int itNum = 1;
+  double delta = 2 * epsilon;
+
+  while ( (delta > epsilon) && (itNum <= maxiter)) {
+
+    // Update Hs
+    mat Hs_a = alpha * WtXs;
+    mat Hs_b = alpha * WtWHs + lambda * Hs;
+    for (mat::iterator i = Hs_b.begin(); i != Hs_b.end(); ++i) {if(*i < MIN_VALUE) *i = MIN_VALUE;};
+    Hs = Hs % (Hs_a / Hs_b);
+
+    // Update Hu
+    mat Hu_a = gamma * WtXu;
+    mat Hu_b = gamma * WtWHu + lambda * Hu; // todo cap
+    for (mat::iterator i = Hu_b.begin(); i != Hu_b.end(); ++i) {if(*i < MIN_VALUE) *i = MIN_VALUE;};
+    Hu = Hu % (Hu_a / Hu_b);
+
+    // Update W
+    mat W_a = alpha * Xs * Hs.t() + gamma * Xu * Hu.t() + beta * AW;
+    mat W_b = alpha * W  * Hs * Hs.t() + gamma * W * Hu * Hu.t() + beta * DW  + lambda * W;
+    for (mat::iterator i = W_b.begin(); i != W_b.end(); ++i) {if (*i < MIN_VALUE) *i = MIN_VALUE;};
+    W = W % (W_a / W_b);
+
+    // Calculate objective function
+    
+    Wt = W.t();
+
+    WtW = Wt * W;
+    WtXs = Wt * Xs;
+    WtXu = Wt * Xu;
+    WtWHs = WtW * Hs;
+    WtWHu = WtW * Hu;
+    DW = D * W;
+    AW = A * W;
+
+    double tr1 = alpha  * (trXstXs - 2*tr(Hs, WtXs) + tr(Hs, WtWHs));
+    double tr2 = gamma  * (trXutXu - 2*tr(Hu, WtXu) + tr(Hu, WtWHu));
+    double tr3 = beta * (tr(W, DW) - tr(W, AW));
+    double tr4 = lambda * (trace(WtW) + tr(Hs, Hs) + tr(Hu, Hu));
+    double Obj = tr1 + tr2 + tr3 + tr4;
+
+    if (itNum != 1) {
+        delta = abs(Obj - lastObj);
+        if (verbose) Rcout << "Iteration " << itNum << " Objective: " << Obj << " Delta " << delta << endl << flush;
+    } else {
+        if (verbose) Rcout << "Iteration " << itNum << " Objective: " << Obj << endl << flush;
+    }
+
+    lastObj = Obj;
+
+    Rcpp::checkUserInterrupt();
+
+    ++itNum;
+  }
+
+  arma::field<arma::mat> returnList(3);
+  returnList(0) = Hs;
+  returnList(1) = Hu;
+  returnList(2) = W;
+
+  return returnList;
+}
