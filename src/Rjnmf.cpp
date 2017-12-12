@@ -2,32 +2,38 @@
 #include <stdlib.h>
 
 // [[Rcpp::depends(RcppArmadillo)]]
-
+// [[Rcpp::plugins(cpp11)]]
+// [[Rcpp::plugins(openmp)]]
 
 using namespace Rcpp;
 using namespace std;
 using namespace arma;
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 
 double inline tr(mat A, mat B) {
   return accu(A % B);
 }
 
-double inline tr(sp_mat A, sp_mat B) {
-  return accu(A % B);
-}
+
 
 #define MIN_VALUE (1e-10)
 
 
 // [[Rcpp::export]]
 arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, double lambda, double epsilon, int maxiter, bool verbose) {
+
   int n = Xs.n_rows;
   int v1 = Xs.n_cols;
   int v2 = Xu.n_cols;
 
   double lastObj = 0;
+
+  // Make deterministic
+  arma_rng::set_seed(5134);
 
   // Initialise Matrices
   arma::mat W(n, k, fill::randu);
@@ -58,26 +64,19 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
     // Update Hs
     mat Hs_a = alpha * WtXs;
     mat Hs_b = alpha * WtWHs + lambda * Hs;
-    
     for (mat::iterator i = Hs_b.begin(); i != Hs_b.end(); ++i) {if(*i < MIN_VALUE) *i = MIN_VALUE;};
-    // mat Hs_tmp = Hs % (Hs_a / Hs_b);
-    // Hs = Hs_tmp;
     Hs = Hs % (Hs_a / Hs_b);
 
     // Update Hu
     mat Hu_a = beta * WtXu;
     mat Hu_b = beta * WtWHu + lambda * Hu; // todo cap
     for (mat::iterator i = Hu_b.begin(); i != Hu_b.end(); ++i) {if(*i < MIN_VALUE) *i = MIN_VALUE;};
-    //mat Hu_tmp = Hu % (Hu_a / Hu_b);
-    //Hu = Hu_tmp;
     Hu = Hu % (Hu_a / Hu_b);
 
     // Update W
     mat W_a = alpha * Xs * Hs.t() + beta * Xu * Hu.t();
     mat W_b = alpha * W  * Hs * Hs.t() + beta * W * Hu * Hu.t() + lambda * W;
     for (mat::iterator i = W_b.begin(); i != W_b.end(); ++i) {if (*i < MIN_VALUE) *i = MIN_VALUE;};
-    // mat W_tmp = W % (W_a / W_b);
-    // W = W_tmp;
     W = W % (W_a / W_b);
 
     // Calculate objective function
