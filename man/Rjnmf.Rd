@@ -4,7 +4,7 @@
 \alias{Rjnmf}
 \title{Performd Joint NMF for two matrices}
 \usage{
-Rjnmf(Xs, Xu, A, k, alpha, beta, lambda, epsilon, matiter, verbose)
+Rjnmf(Xs, Xu, k, alpha, lambda, epsilon, maxiter, verbose)
 }
 \description{
 Performd Joint NMF for two matrices

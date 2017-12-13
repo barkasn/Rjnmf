@@ -12,7 +12,7 @@ Rjnmf <- function(Xs, Xu, k, alpha, lambda, epsilon, maxiter, verbose) {
    ret;
 }
 
-Rjnmf <- function(Xs, Xu, A, k, alpha, beta, lambda, epsilon, matiter, verbose) {
+RjnmfGR <- function(Xs, Xu, A, k, alpha, beta, lambda, epsilon, maxiter, verbose) {
     ret <- RjnmfGRC(Xs, Xu, A, k, alpha, beta, lambda, epsilon, maxiter, verbose);
     names(ret) <- c('Hs','Hu','W');
     ret;
