@@ -33,7 +33,7 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
   double lastObj = 0;
 
   // Make deterministic
-  arma_rng::set_seed(5134);
+  //arma_rng::set_seed(5134);
 
   // Initialise Matrices
   arma::mat W(n, k, fill::randu);
@@ -80,7 +80,7 @@ arma::field<arma::mat> RjnmfC(arma::mat Xs, arma::mat Xu, int k, double alpha, d
     W = W % (W_a / W_b);
 
     // Calculate objective function
-    
+
     Wt = W.t();
     WtW = Wt * W;
     WtXs = Wt * Xs;
@@ -128,7 +128,7 @@ arma::field<arma::mat> RjnmfGRC(arma::mat Xs, arma::mat Xu, arma::mat A, int k, 
   double lastObj = 0;
 
   // Make deterministic
-  arma_rng::set_seed(5134);
+  //arma_rng::set_seed(5134);
 
   // Initialise Matrices
   arma::mat W(n, k, fill::randu);
@@ -147,7 +147,7 @@ arma::field<arma::mat> RjnmfGRC(arma::mat Xs, arma::mat Xu, arma::mat A, int k, 
     Acolsums(i) = sum(A.col(i));
   }
   mat D = diagmat(Acolsums);
-  
+
   double gamma = 1.0 - alpha;
   double trXstXs = tr(Xs, Xs);
   double trXutXu = tr(Xu, Xu);
@@ -187,7 +187,7 @@ arma::field<arma::mat> RjnmfGRC(arma::mat Xs, arma::mat Xu, arma::mat A, int k, 
     W = W % (W_a / W_b);
 
     // Calculate objective function
-    
+
     Wt = W.t();
 
     WtW = Wt * W;
